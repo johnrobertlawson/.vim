@@ -1,4 +1,4 @@
-" Save and run python script
+" 
 map \wr <Esc>:w<CR>:! python %:p<CR>
 
 " Save and run Rubber (LaTeX)
@@ -15,6 +15,16 @@ set scrolloff=4
 " Title of terminal
 set title
 
+" tmux fixes "
+""""""""""""""
+" Handle tmux $TERM quirks in vim
+"if $TERM =~ '^screen-256color'
+    "map <Esc>OH <Home>
+    "map! <Esc>OH <Home>
+    "map <Esc>OF <End>
+    "map! <Esc>OF <End>
+"endif
+"
 set cursorline
 syntax on
 
@@ -26,6 +36,12 @@ color luna-term
 " airline
 let g:airline#extensions#tabline#enabled = 1
 
+" latex
+filetype plugin on
+filetype indent on
+let g:tex_flavor='latex'
+let g:tex_fold_enabled=1
+
 " j and k move displayed lines
 nnoremap <Down> gj
 nnoremap <Up> gk
@@ -33,6 +49,14 @@ nnoremap 0 g0
 nnoremap $ g$
 nnoremap g0 0
 nnoremap g$ $
+"
+"inoremap <Down> <Esc> gji
+"inoremap <Up> <Esc> gki
+"inoremap 0 g0
+"inoremap $ g$
+"inoremap g0 0
+"inoremap g$ $
+"
 
 " Set pwd to open tab/file
 autocmd BufEnter * lcd %:p:h
@@ -70,7 +94,7 @@ set copyindent
 " Allow pasting indenting
 set pastetoggle=<F2>
 
-function! ToggleComment()
+function! TogglePyComment()
     
     let pos=getpos(".")
     let win=winsaveview()
@@ -86,8 +110,34 @@ function! ToggleComment()
     startinsert
 endfunction   
 
-nnoremap <F3> <Esc>:call ToggleComment()<CR><Esc>
-inoremap <F3> <Esc>:call ToggleComment()<CR><Esc>
+function! ToggleTexComment()
+    
+    let pos=getpos(".")
+    let win=winsaveview()
+    if getline(".") =~ '\s*% '
+        normal! ^2x
+        let pos[2]-=1
+    elseif getline(".") =~ '\s*%'
+        normal! ^x
+        let pos[2]-=1
+    else 
+        normal! I% 
+        let pos[2]+=3
+    endif
+    call winrestview(win)
+    call setpos(".",pos)
+    startinsert
+endfunction   
+
+autocmd Filetype python nnoremap <F3> <Esc>:call TogglePyComment()<CR><Esc>
+autocmd Filetype tex nnoremap <F3> <Esc>:call ToggleTexComment()<CR><Esc>
+
+map <silent> ]s :/\\\(sub\)\{,2}section\s*{<CR> :noh<CR>
+map <silent> [s :?\\\(sub\)\{,2}section\s*{<CR> :noh<CR>
+
+map <silent> ]d :/\<def\><CR> :noh<CR>
+map <silent> [d :?\<def\><CR> :noh<CR>
+
 
 " Comment (Python)
 "map <F3> I# <Esc>       
@@ -117,9 +167,11 @@ while c <= 'z'
   let c = nr2char(1+char2nr(c))
 endw
 
-set timeout ttimeoutlen=50
+set timeout ttimeoutlen=5
 
 nnoremap <A-j> :m .+1<cr>
 nnoremap <A-k> :m .-2<cr>
 
 map <F9> <Esc> :noh <cr>
+
+map <F12> <Esc> :set spell! spelllang=en_us <cr>
